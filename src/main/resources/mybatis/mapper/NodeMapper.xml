@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.wujie.app.business.repository.NodeMapper" >
+  <resultMap id="BaseResultMap" type="com.wujie.app.business.entity.Node" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="lft" property="lft" jdbcType="BIGINT" />
+    <result column="rgt" property="rgt" jdbcType="BIGINT" />
+    <result column="creat_time" property="creatTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, name, lft, rgt, creat_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from node
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from node
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.wujie.app.business.entity.Node" >
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into node (id, name, lft, 
+      rgt, creat_time)
+    values (#{id,jdbcType=BIGINT}, #{name,jdbcType=VARCHAR}, #{lft,jdbcType=BIGINT}, 
+      #{rgt,jdbcType=BIGINT}, #{creatTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.wujie.app.business.entity.Node" >
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into node
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="lft != null" >
+        lft,
+      </if>
+      <if test="rgt != null" >
+        rgt,
+      </if>
+      <if test="creatTime != null" >
+        creat_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="lft != null" >
+        #{lft,jdbcType=BIGINT},
+      </if>
+      <if test="rgt != null" >
+        #{rgt,jdbcType=BIGINT},
+      </if>
+      <if test="creatTime != null" >
+        #{creatTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.wujie.app.business.entity.Node" >
+    update node
+    <set >
+      <if test="name != null" >
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="lft != null" >
+        lft = #{lft,jdbcType=BIGINT},
+      </if>
+      <if test="rgt != null" >
+        rgt = #{rgt,jdbcType=BIGINT},
+      </if>
+      <if test="creatTime != null" >
+        creat_time = #{creatTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.wujie.app.business.entity.Node" >
+    update node
+    set name = #{name,jdbcType=VARCHAR},
+      lft = #{lft,jdbcType=BIGINT},
+      rgt = #{rgt,jdbcType=BIGINT},
+      creat_time = #{creatTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+
+  <update id="updateRgt">
+    update node set
+    rgt = rgt + 2
+    where rgt &gt;= #{rgt}
+  </update>
+  <update id="updateLft">
+    update node set
+    lft = lft + 2
+    where lft &gt;= #{rgt}
+  </update>
+  <select id="getChildNodes" resultMap="BaseResultMap" >
+    select * from node where lft BETWEEN #{lft} AND #{rgt} ORDER BY lft ASC
+  </select>
+  <select id="getChildNodeVos" resultType="com.wujie.app.business.vo.NodeVo" >
+    SELECT b.*,ns.ip,ns.port
+    FROM node_standby ns,
+    (SELECT n.* FROM node n,
+    (SELECT * FROM node WHERE id = #{nodeId}) a
+    WHERE n.lft BETWEEN a.lft AND a.rgt) b
+    WHERE ns.node_id = b.id
+  </select>
+  <select id="getLayer" resultType="java.lang.Integer" >
+    SELECT COUNT(*) FROM node b,
+    (SELECT * FROM node WHERE id = #{nodeId}) a
+    WHERE b.lft &lt;= a.lft AND b.rgt &gt;=a.rgt
+  </select>
+  <select id="getAllChildNodeVosLayer" resultType="com.wujie.app.business.vo.NodeVo" >
+    SELECT a.*,b.ip,b.port
+    FROM node_standby b,
+    (select child.id,child.name,child.lft,child.rgt, count(child.id) layer
+    from node parent,node child
+    where  child.lft &gt;= parent.lft and child.rgt &lt;= parent.rgt
+    group by child.id
+    order by child.lft) a
+    WHERE b.node_id = a.id
+  </select>
+</mapper>
