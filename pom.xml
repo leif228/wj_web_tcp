@@ -237,7 +237,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.47</version>
+            <version>1.2.83</version>
         </dependency>
         <!-- JsonObject转型需要  <classifier>jdk15</classifier>需要加上-->
         <!-- https://mvnrepository.com/artifact/net.sf.json-lib/json-lib -->
